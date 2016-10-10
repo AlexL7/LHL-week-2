@@ -2,17 +2,14 @@
 
 const repoOwnerData = process.argv;
 
-let http =  require('http');
-let fs = require('fs');
-
-let dir = './avatars';
-//repos/:owner/:repo/contributors
-
-let request = require('request');
+const http =  require('http');
+const fs = require('fs');
+const dir = './avatars';
+const request = require('request');
 
 
 
-function githubRequest(endpoint, callback){
+function githubRequest(endpoint, callback){   //Requesting function to Github
   const githubRoot = "https://api.github.com";
 
    let requestData = {
@@ -21,13 +18,13 @@ function githubRequest(endpoint, callback){
       bearer: '2533ca353fc15a6fef11a0aecf34efbc007b6de3'
     },
     headers: {
-      'User-Agent': 'request' // Github requires a user agent header. You can put anything here.
+      'User-Agent': 'request' // Github requires a user agent header.
     }
   };
   request.get(requestData, callback);
 }
 
-function getGithubContributors(owner, username, callback){
+function getGithubContributors(owner, username, callback){ //Entering Arguments to access the correct API location
   githubRequest(`/repos/${owner}/${username}/contributors`,callback);
 }
 
@@ -41,21 +38,21 @@ getGithubContributors(githubOwner,githubUsername,function(error, response, body)
     console.log("Wrong: ", error);
     return;
   }
-  const contributors = JSON.parse(body);
+
+  const contributors = JSON.parse(body); //converting JSON file
 
   console.log("Starting to download files....")
 
   contributors.forEach(function(account){
-      downloadImagesByURL(account.avatar_url,`./avatars/${account.login}`);
+      downloadImagesByURL(account.avatar_url,`./avatars/${account.login}`); //loop between each url
       });
   });
 
 
-function downloadImagesByURL(url,filePath){
+function downloadImagesByURL(url,filePath){ //Given url download it using pipe.
   if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
   }
-
   request(url).pipe(fs.createWriteStream(filePath));
 };
 
