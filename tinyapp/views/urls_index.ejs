@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<header>
+  <% include ./partials/_header.ejs %>
+</header>
+<body>
+  Shortening Urls:<br>
+
+  <ul>
+    <% for (const key in urls){ %>
+      <li><%= urls[key] %></li>
+    <% } %>
+
+  </ul>
+  <a href= '/urls/:id'> Link to shorten url </a>
+    <!-- Write EJS code here to display shortened links -->
+
+</body>
+</html>
