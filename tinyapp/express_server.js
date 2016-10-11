@@ -40,12 +40,19 @@ app.get("/urls.json", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  console.log(req.body.longURL);  // debug statement to see POST parameters
-  const rand = generateRandomString();      // Respond with 'Ok' (we will replace this)
+  //console.log(req.body.longURL);  // debug statement to see POST parameters
+  const rand = generateRandomString();
+                                  // Respond with 'Ok' (we will replace this)
   urlDatabase[rand] = req.body.longURL;
   res.redirect(`/urls/${rand}`);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  let short = req.params.shortURL;
+  //console.log(short);
+  let longURL = urlDatabase[short];
+  res.redirect(longURL);
+});
 
 app.get("/hello", (req, res) => {
   res.end("<html><body>Hello <b>World</b></body></html>\n");
