@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <body>
-  <p><%= shortURL %></p>
+  <p>SHORT URL : <%= shortURL %></p><form method="POST" action="/urls/<%= shortURL %>/update">
+
+  <label for="newlongURL">Change URL:</label>
+      <input id="newlongURL" type="text" name="newlongURL" placeholder="http://" style="width: 300px">
+      <input type="submit" value="Update">
+  </form></li>
   <p>
    <a href= '/urls/'> Back to Urls </a>
   </p>
