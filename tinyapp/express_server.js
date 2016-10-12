@@ -10,7 +10,7 @@ const urlDatabase = {
 };
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({extended:false}));
 
 
 app.set("view engine", "ejs");
@@ -28,14 +28,24 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+
 app.get("/urls/:id", (req, res) => {
   let templateVars = { shortURL: req.params.id };
   res.render("urls_show", templateVars);
 });
 
+
+app.post("/urls/:id/delete", (req, res) => {
+  console.log(req.params.id);
+  delete urlDatabase[req.params.id];
+  res.redirect('/urls/');
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
+
 
 
 
