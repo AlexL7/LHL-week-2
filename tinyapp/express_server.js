@@ -77,7 +77,22 @@ app.post("/login", (req, res) => {
 
 
 app.post("/logout", (req, res) =>{
-  res.cookie('username');
+  res.clearCookie('username');
+  res.redirect("/");
+
+});
+
+
+app.get("/register", (req, res) =>{
+res.render("register");
+});
+
+let users = {};
+
+app.post("/register", (req, res) => {
+  const userRandomID = generateRandomString();
+  user["userRandomID"] = {id:userRandomID, email: req.body.email,password: req.body.password};
+  res.cookie('user_id', userRandomID);
   res.redirect("/");
 
 });
