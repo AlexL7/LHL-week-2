@@ -1,1 +1,13 @@
-<title>TITLE : Shorten URL</title>
+<title>Shorten URL</title>
+<% if(email>0){ %>
+      <p>Profile:  <%= email %> <form method="POST" action="/logout"><button type ="logout"> Logout</button></form><br></p>
+
+  <% } else{ %>
+
+<form action="/login" method="POST" style="margin:50px;">
+      <label for="username">Enter your username:</label>
+      <input id="username" type="text" name="username" placeholder="Type username here" style="width: 300px">
+      <input type="submit" value="Login">
+    </form>
+
+    <% } %>
