@@ -7,11 +7,16 @@ const PORT = process.env.PORT || 8080; // default port 80      <input type="subm
 
 const _ = require('lodash');
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+const bcrypt = require('bcrypt');
 
+const cookieSession = require('cookie-session');
+
+app.use(cookieSession({
+  keys:['key1','key2']
+}));
 
 let users = {};
+let urlGeneral ={};
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended:false}));
@@ -25,8 +30,18 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: users[req.cookies["user_id"]].urlDatabase,
-  email: users[req.cookies["user_id"]].email };
+
+  console.log(users);
+  console.log(req.session.user_id);
+
+  var id = (req.session.user_id);
+
+  console.log(id.urlDatabase);
+
+  console.log(users[req.session.user_id]);
+  console.log(users[req.session.user_id]['urlDatabase']);
+  let templateVars = { urls: users[req.session.user_id].urlDatabase,
+  email: users[req.session.user_id].email };
 
 
   res.render("urls_index", templateVars);
@@ -36,7 +51,7 @@ app.get("/urls/new", (req, res) => {
 
 
   let templateVars = { shortURL: req.params.id,
-  email: users[req.cookies["user_id"]].email, };
+  email: users[req.session.user_id].email };
 
   res.render("urls_new",templateVars);
 });
@@ -50,9 +65,10 @@ app.post("/login/", (req, res) => {
   const user = _.find(users, {'email': email});
 
   if(user){
-    if(user.password == password){
+    if(bcrypt.compareSync(password, user.password)){
 
-        res.cookie('user_id', user.id);
+        //req.session.('user_id', user.id);
+        req.session.user_id = user.id
          return res.redirect("/urls");
     }else{
       res.status(403).send({error: "Incorrect Password"});
@@ -62,7 +78,7 @@ app.post("/login/", (req, res) => {
   }
 
 
-  res.cookie('user_id',user.id);
+  req.session.user_id = user.id;
   res.redirect("/url");
 });
 
@@ -73,25 +89,27 @@ app.get("/login/",(req, res) =>{
 
 app.get("/urls/:id", (req, res) => {
   let templateVars = { shortURL: req.params.id,
-  email: users[req.cookies["user_id"]].email, };
+  email: users[req.session.user_id].email, };
   res.render("urls_show", templateVars);
 });
 
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete users[req.cookies["user_id"]].urlDatabase[req.params.id];
+  delete users[req.session.user_id].urlDatabase[req.params.id];
+  delete urlGeneral[req.params.id];
   res.redirect('/urls/');
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  users[req.cookies["user_id"]].urlDatabase[req.params.id] = req.body.newlongURL;
+  users[req.session.user_id].urlDatabase[req.params.id] = req.body.newlongURL;
+  urlGeneral[req.params.id] = req.body.newlongURL;
   res.redirect("/urls/");
 });
 
 
 
 app.post("/logout", (req, res) =>{
-  res.clearCookie('user_id');
+  req.session.user_id = null;
   res.redirect("/");
 
 });
@@ -114,16 +132,16 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  console.log(email);
-  console.log(password);
+  const hashed_password = bcrypt.hashSync(password,10);
+
 
   if( email.length == 0 || password.length == 0){
     res.status(400).send({error: "empty field"});
     return res.redirect("/register");
   }else{
      const userRandomID = generateRandomString();
-  users[userRandomID] = {id:userRandomID, email: req.body.email, password: req.body.password, urlDatabase: {}};
-  res.cookie('user_id', userRandomID);
+  users[userRandomID] = {id:userRandomID, email: req.body.email, password: hashed_password, urlDatabase: {}};
+  req.session.user_id = userRandomID;
   res.redirect("/");
   };
 });
@@ -143,12 +161,10 @@ app.post("/urls", (req, res) => {
   //console.log(req.body.longURL);  // debug statement to see POST parameters
   const rand = generateRandomString();
 
-  console.log(users[req.cookies["user_id"]]);
-  console.log(users[req.cookies["user_id"]].urlDatabase);
-  console.log(users[req.cookies["user_id"]].urlDatabase[rand]);
-  console.log(req.body.longURL);
+
                                   // Respond with 'Ok' (we will replace this)
-  users[req.cookies["user_id"]].urlDatabase[rand] = req.body.longURL;
+  users[req.session.user_id].urlDatabase[rand] = req.body.longURL;
+  urlGeneral[rand] = req.body.longURL;
   res.redirect(`/urls/${rand}`);
 });
 
@@ -156,7 +172,9 @@ app.post("/urls", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   let short = req.params.shortURL;
   //console.log(short);
-  let longURL = urlDatabase[short];
+  console.log(urlGeneral);
+  console.log(urlGeneral[short]);
+  let longURL = urlGeneral[short];
   res.redirect(longURL);
 });
 
