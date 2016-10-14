@@ -10,12 +10,8 @@ const _ = require('lodash');
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
 
-
+let users = {};
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended:false}));
@@ -29,7 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase,
+  let templateVars = { urls: users[req.cookies["user_id"]].urlDatabase,
   email: users[req.cookies["user_id"]].email };
 
 
@@ -83,12 +79,12 @@ app.get("/urls/:id", (req, res) => {
 
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+  delete users[req.cookies["user_id"]].urlDatabase[req.params.id];
   res.redirect('/urls/');
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  urlDatabase[req.params.id] = req.body.newlongURL;
+  users[req.cookies["user_id"]].urlDatabase[req.params.id] = req.body.newlongURL;
   res.redirect("/urls/");
 });
 
@@ -105,7 +101,7 @@ app.get("/register", (req, res) =>{
 res.render("register");
 });
 
-let users = {Whcoz:{ id: 'Whcoz', email: 'test@test.com', password: '123'}};
+
 
 app.post("/register", (req, res) => {
   const user = _.find(users, {'email': req.body.email});
@@ -126,7 +122,7 @@ app.post("/register", (req, res) => {
     return res.redirect("/register");
   }else{
      const userRandomID = generateRandomString();
-  users[userRandomID] = {id:userRandomID, email: req.body.email,password: req.body.password};
+  users[userRandomID] = {id:userRandomID, email: req.body.email, password: req.body.password, urlDatabase: {}};
   res.cookie('user_id', userRandomID);
   res.redirect("/");
   };
@@ -146,10 +142,16 @@ app.get("/urls.json", (req, res) => {
 app.post("/urls", (req, res) => {
   //console.log(req.body.longURL);  // debug statement to see POST parameters
   const rand = generateRandomString();
+
+  console.log(users[req.cookies["user_id"]]);
+  console.log(users[req.cookies["user_id"]].urlDatabase);
+  console.log(users[req.cookies["user_id"]].urlDatabase[rand]);
+  console.log(req.body.longURL);
                                   // Respond with 'Ok' (we will replace this)
-  urlDatabase[rand] = req.body.longURL;
+  users[req.cookies["user_id"]].urlDatabase[rand] = req.body.longURL;
   res.redirect(`/urls/${rand}`);
 });
+
 
 app.get("/u/:shortURL", (req, res) => {
   let short = req.params.shortURL;
