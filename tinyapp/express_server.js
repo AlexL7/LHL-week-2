@@ -5,6 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 8080; // default port 80      <input type="submit" value="Sign In">
 80
 
+const _ = require('lodash');
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
@@ -24,12 +25,14 @@ app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
 
-  res.end("Hello!");
+  res.render("main");
 });
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase,
-  email: req.cookies["username"], };
+  email: users[req.cookies["user_id"]].email };
+
+
   res.render("urls_index", templateVars);
 });
 
@@ -37,24 +40,44 @@ app.get("/urls/new", (req, res) => {
 
 
   let templateVars = { shortURL: req.params.id,
-  email: req.cookies["username"], };
+  email: users[req.cookies["user_id"]].email, };
 
   res.render("urls_new",templateVars);
 });
 
-app.get("/urls/login", (req, res) =>{
-let templateVars = { email: req.cookies["username"] };
+
+//user[password] = undefined
+
+app.post("/login/", (req, res) => {
+  const email = req.body.username;
+  const password = req.body.password;
+  const user = _.find(users, {'email': email});
+
+  if(user){
+    if(user.password == password){
+
+        res.cookie('user_id', user.id);
+         return res.redirect("/urls");
+    }else{
+      res.status(403).send({error: "Incorrect Password"});
+    }
+  }else{
+     res.status(403).send({error: "user not found"});
+  }
 
 
-res.render("urls_login", templateVars);
-
-
+  res.cookie('user_id',user.id);
+  res.redirect("/url");
 });
+
+app.get("/login/",(req, res) =>{
+  res.render("login");
+})
 
 
 app.get("/urls/:id", (req, res) => {
   let templateVars = { shortURL: req.params.id,
-  email: req.cookies["username"], };
+  email: users[req.cookies["user_id"]].email, };
   res.render("urls_show", templateVars);
 });
 
@@ -69,15 +92,10 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/urls/");
 });
 
-app.post("/login", (req, res) => {
-  var email = req.body.username;
-  res.cookie('username',email);
-  res.redirect("/");
-});
 
 
 app.post("/logout", (req, res) =>{
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/");
 
 });
@@ -87,15 +105,36 @@ app.get("/register", (req, res) =>{
 res.render("register");
 });
 
-let users = {};
+let users = {Whcoz:{ id: 'Whcoz', email: 'test@test.com', password: '123'}};
 
 app.post("/register", (req, res) => {
-  const userRandomID = generateRandomString();
-  user["userRandomID"] = {id:userRandomID, email: req.body.email,password: req.body.password};
+  const user = _.find(users, {'email': req.body.email});
+  if(user){
+    res.status(400).send({error: "user already registered"});
+
+    return res.redirect("/register");
+  }
+
+  const email = req.body.email;
+  const password = req.body.password;
+
+  console.log(email);
+  console.log(password);
+
+  if( email.length == 0 || password.length == 0){
+    res.status(400).send({error: "empty field"});
+    return res.redirect("/register");
+  }else{
+     const userRandomID = generateRandomString();
+  users[userRandomID] = {id:userRandomID, email: req.body.email,password: req.body.password};
   res.cookie('user_id', userRandomID);
   res.redirect("/");
-
+  };
 });
+
+
+
+
 
 
 app.get("/urls.json", (req, res) => {
